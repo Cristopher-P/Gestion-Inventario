@@ -209,6 +209,8 @@ export default function InventoryManager() {
                                      const noFunc = p.locations[loc]?.no_funcional || 0;
                                      const totalLoc = func + noFunc;
                                      
+                                     if (totalLoc === 0) return null;
+
                                      return (
                                        <div key={loc} style={{ backgroundColor: 'white', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-sm)', padding: '0.75rem' }}>
                                           <div style={{ fontWeight: 500, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.25rem', marginBottom: '0.5rem', fontSize: '0.875rem' }}>{loc}</div>
