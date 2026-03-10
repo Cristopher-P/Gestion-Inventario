@@ -17,6 +17,8 @@ export function InventoryProvider({ children }) {
       const allProducts = await db.products.toArray();
       const allTransactions = await db.transactions.orderBy('date').reverse().toArray();
       
+      allProducts.reverse(); // Reverse so latest added appear first
+
       // Backward compatibility mapping for old v1 products
       const mappedProducts = allProducts.map(p => {
         if (p.locations === undefined) {

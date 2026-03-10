@@ -28,33 +28,44 @@ export default function Topbar({ toggleSidebar }) {
                  name: `Equipo Aleatorio Modelo ${Math.floor(Math.random()*1000)}`,
                  sku: `SKU-${Date.now()}-${i}`,
                  category: ['Equipos de Cómputo', 'Monitores', 'Periféricos', 'Mobiliario'][Math.floor(Math.random()*4)],
-                 stock: Math.floor(Math.random() * 20),
                  createdAt: new Date().toISOString(),
                  updatedAt: new Date().toISOString()
                }));
                
+               const LOCATIONS = ['C5', 'Seguridad Pública', 'CERITY'];
+
                for(let p of dummyProducts) {
-                 const newP = {...p, stock: 0};
-                 const id = await db.products.add(newP);
-                 
-                 // Transactions simulate stock history
+                 const locs = {
+                   'C5': { funcional: 0, no_funcional: 0 },
+                   'Seguridad Pública': { funcional: 0, no_funcional: 0 },
+                   'CERITY': { funcional: 0, no_funcional: 0 }
+                 };
+                 const initialQty = Math.floor(Math.random()*10) + 1; // 1 to 10
+                 const randomLoc = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
                  const now = new Date();
                  const randDays = Math.floor(Math.random()*30);
                  const pastDate = new Date(now.setDate(now.getDate() - randDays));
                  
-                 const initialQty = p.stock + Math.floor(Math.random()*10);
+                 // Simular entrada inicial
+                 locs[randomLoc].funcional += initialQty;
+                 const newP = {...p, locations: locs};
+                 const id = await db.products.add(newP);
                  
-                 await db.products.update(id, { stock: initialQty });
                  await db.transactions.add({
                     productId: id, productName: p.name, type: 'ENTRADA', quantity: initialQty, 
+                    location: randomLoc, condition: 'funcional', targetLocation: null,
                     reason: 'Compra inicial', date: pastDate.toISOString()
                  });
                  
-                 if (initialQty > p.stock) { // Simulate some going out
-                    await db.products.update(id, { stock: p.stock });
+                 // Simular salida parcial
+                 const outQty = Math.floor(Math.random() * initialQty);
+                 if (outQty > 0) { 
+                    locs[randomLoc].funcional -= outQty;
+                    await db.products.update(id, { locations: locs });
                     await db.transactions.add({
-                        productId: id, productName: p.name, type: 'SALIDA', quantity: initialQty - p.stock, 
-                        reason: 'Asignación a personal', date: new Date().toISOString()
+                        productId: id, productName: p.name, type: 'SALIDA', quantity: outQty, 
+                        location: randomLoc, condition: 'funcional', targetLocation: null,
+                        reason: 'Asignación a personal / Bajas', date: new Date().toISOString()
                      });
                  }
                }
