@@ -2,10 +2,12 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('InventoryDB');
 
-// Version 2: Multi-location tracking
-db.version(2).stores({
+// Version 3: Inventory Audits
+db.version(3).stores({
   products: '++id, name, sku, category, *locations', // locations will be an object holding counts per site
-  transactions: '++id, productId, type, date' 
+  transactions: '++id, productId, type, date',
+  audits: '++id, date, location, status', // status: 'in_progress', 'completed'
+  audit_items: '++id, auditId, productId, [auditId+productId]' // Compound index to easily fetch items by audit and product
 });
 
 // Utility to initialize default locations object for a new product

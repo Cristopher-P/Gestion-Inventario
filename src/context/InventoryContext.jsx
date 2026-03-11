@@ -10,12 +10,14 @@ export function useInventory() {
 export function InventoryProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [audits, setAudits] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     try {
       const allProducts = await db.products.toArray();
       const allTransactions = await db.transactions.orderBy('date').reverse().toArray();
+      const allAudits = await db.audits.orderBy('date').reverse().toArray();
       
       allProducts.reverse(); // Reverse so latest added appear first
 
@@ -32,6 +34,7 @@ export function InventoryProvider({ children }) {
 
       setProducts(mappedProducts);
       setTransactions(allTransactions);
+      setAudits(allAudits);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -159,17 +162,141 @@ export function InventoryProvider({ children }) {
       return total;
   };
 
+  const startAudit = async (location) => {
+    try {
+      const newAudit = {
+        date: new Date().toISOString(),
+        location,
+        status: 'in_progress'
+      };
+      const auditId = await db.audits.add(newAudit);
+      
+      const currentProducts = await db.products.toArray();
+      const auditItemsToAdd = [];
+      
+      for (const product of currentProducts) {
+        const locs = product.locations || getInitialLocations();
+        const funcional = locs[location]?.funcional || 0;
+        const no_funcional = locs[location]?.no_funcional || 0;
+        
+        auditItemsToAdd.push({
+          auditId,
+          productId: product.id,
+          expectedFuncional: funcional,
+          expectedNoFuncional: no_funcional,
+          countedFuncional: null,
+          countedNoFuncional: null
+        });
+      }
+      
+      if (auditItemsToAdd.length > 0) {
+        await db.audit_items.bulkAdd(auditItemsToAdd);
+      }
+      
+      await loadData();
+      return auditId;
+    } catch (error) {
+      console.error('Error starting audit:', error);
+      throw error;
+    }
+  };
+
+  const getAuditItems = async (auditId) => {
+    return await db.audit_items.where('auditId').equals(Number(auditId)).toArray();
+  };
+
+  const saveAuditProgress = async (itemsUpdates) => {
+    try {
+      await db.transaction('rw', db.audit_items, async () => {
+        for (const update of itemsUpdates) {
+          await db.audit_items.update(update.id, {
+            countedFuncional: update.countedFuncional,
+            countedNoFuncional: update.countedNoFuncional
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error saving audit progress:', error);
+      throw error;
+    }
+  };
+
+  const finishAudit = async (auditId) => {
+    try {
+      const parsedAuditId = Number(auditId);
+      const audit = await db.audits.get(parsedAuditId);
+      if (!audit) throw new Error("Auditoría no encontrada");
+      
+      const items = await db.audit_items.where('auditId').equals(parsedAuditId).toArray();
+      
+      await db.transaction('rw', db.products, db.transactions, db.audits, async () => {
+        for (const item of items) {
+          const cFuncional = item.countedFuncional !== null ? item.countedFuncional : item.expectedFuncional;
+          const cNoFuncional = item.countedNoFuncional !== null ? item.countedNoFuncional : item.expectedNoFuncional;
+          
+          let diffFuncional = cFuncional - item.expectedFuncional;
+          let diffNoFuncional = cNoFuncional - item.expectedNoFuncional;
+          
+          if (diffFuncional !== 0 || diffNoFuncional !== 0) {
+            const product = await db.products.get(item.productId);
+            if (product) {
+               const locs = product.locations || getInitialLocations();
+               
+               locs[audit.location].funcional += diffFuncional;
+               locs[audit.location].no_funcional += diffNoFuncional;
+               
+               await db.products.update(product.id, { locations: locs, updatedAt: new Date().toISOString() });
+               
+               const createTx = async (diff, condition) => {
+                  if (diff === 0) return;
+                  const type = diff > 0 ? 'ENTRADA' : 'SALIDA';
+                  const qty = Math.abs(diff);
+                  
+                  await db.transactions.add({
+                    productId: product.id,
+                    productName: product.name,
+                    type,
+                    quantity: qty,
+                    location: audit.location,
+                    targetLocation: null,
+                    condition,
+                    reason: `Ajuste de Auditoría #${audit.id}`,
+                    date: new Date().toISOString()
+                  });
+               };
+               
+               await createTx(diffFuncional, 'funcional');
+               await createTx(diffNoFuncional, 'no_funcional');
+            }
+          }
+        }
+        
+        await db.audits.update(parsedAuditId, { status: 'completed' });
+      });
+      
+      await loadData();
+    } catch (error) {
+      console.error('Error finishing audit:', error);
+      throw error;
+    }
+  };
+
   return (
     <InventoryContext.Provider value={{ 
       products, 
-      transactions, 
+      transactions,
+      audits,
       loading, 
       addProduct, 
       updateProduct, 
       deleteProduct, 
       addTransaction,
       refreshData,
-      getTotalStock
+      getTotalStock,
+      startAudit,
+      getAuditItems,
+      saveAuditProgress,
+      finishAudit
     }}>
       {children}
     </InventoryContext.Provider>

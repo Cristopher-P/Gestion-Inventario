@@ -28,7 +28,7 @@ export default function Dashboard() {
     if (pTotal > 0 && pTotal <= 5) skusBajoStock++;
   });
 
-  const tenRecentTransactions = transactions.slice(0, 10);
+  const tenRecentTransactions = transactions.slice().reverse().slice(0, 10);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
