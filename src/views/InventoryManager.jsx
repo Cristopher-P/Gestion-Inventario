@@ -22,6 +22,22 @@ const emptyForm = () => ({
   locations: getInitialLocations()
 });
 
+/* ── Form helper components — MUST be defined at module scope.
+   If defined inside InventoryManager, React creates new references
+   on every render and unmounts/remounts inputs, losing focus. ── */
+const SectionTitle = ({ children }) => (
+  <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem', marginBottom: '0.75rem' }}>
+    {children}
+  </div>
+);
+
+const Field = ({ label, required, children }) => (
+  <div className="form-group" style={{ marginBottom: 0 }}>
+    <label className="form-label">{label} {required && <span style={{ color: 'var(--error-color)' }}>*</span>}</label>
+    {children}
+  </div>
+);
+
 export default function InventoryManager() {
   const { products, addProduct, updateProduct, deleteProduct, getTotalStock } = useInventory();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,20 +140,6 @@ export default function InventoryManager() {
     (p.marca || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.responsable || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.unidadAdministrativa || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  /* ─── Sección del formulario ─── */
-  const SectionTitle = ({ children }) => (
-    <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem', marginBottom: '0.75rem' }}>
-      {children}
-    </div>
-  );
-
-  const Field = ({ label, required, children }) => (
-    <div className="form-group" style={{ marginBottom: 0 }}>
-      <label className="form-label">{label} {required && <span style={{ color: 'var(--error-color)' }}>*</span>}</label>
-      {children}
-    </div>
   );
 
   return (
@@ -320,7 +322,7 @@ export default function InventoryManager() {
                     {/* Left */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
                       <Field label="Descripción" required>
-                        <input required autoFocus type="text" className="form-control" value={formData.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Escritorio de madera color nogal, 3 gavetas" />
+                        <input required type="text" className="form-control" value={formData.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Escritorio de madera color nogal, 3 gavetas" />
                       </Field>
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

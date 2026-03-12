@@ -318,7 +318,7 @@ export default function ActiveAudit() {
                           transition: 'all 0.15s',
                           minHeight: '44px',
                           lineHeight: 1.2,
-                          webkitTapHighlightColor: 'transparent',
+                          WebkitTapHighlightColor: 'transparent',
                         }}
                       >
                         {label}

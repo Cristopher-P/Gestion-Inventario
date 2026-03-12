@@ -41,6 +41,19 @@ export function InventoryProvider({ children }) {
     name:     a.name,
   });
 
+  const mapTransaction = (t) => ({
+    id:             t.id,
+    productId:      t.product_id,
+    productName:    t.product_name || '',
+    type:           t.type,
+    quantity:       t.quantity,
+    location:       t.location,
+    targetLocation: t.target_location,
+    condition:      t.condition,
+    reason:         t.reason || '',
+    date:           t.date,
+  });
+
   // ── Load all data ──
   const loadData = async () => {
     try {
@@ -51,7 +64,7 @@ export function InventoryProvider({ children }) {
       ]);
 
       setProducts((prods || []).map(mapProduct));
-      setTransactions(txs || []);
+      setTransactions((txs || []).map(mapTransaction));
       setAudits((auds || []).map(mapAudit));
     } catch (error) {
       console.error('Error loading data:', error);
