@@ -8,7 +8,7 @@ export default function Topbar({ toggleSidebar }) {
     <header className="topbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button 
-          className="btn btn-secondary mobile-toggle" 
+          className="btn btn-secondary mobile-toggle topbar-sidebar-toggle" 
           onClick={toggleSidebar}
           style={{ padding: '0.375rem' }}
         >

@@ -131,210 +131,217 @@ export default function ActiveAudit() {
   const isCompleted = audit.status === 'completed';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
-      
-      {/* Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.75rem' }}>
+
+      {/* ── Header ── */}
       <div>
-        <button 
-          className="btn btn-secondary text-sm" 
-          style={{ marginBottom: '0.5rem', padding: '0.25rem 0.5rem', height: 'auto', border: 'none', background: 'transparent' }}
+        {/* Back button — oculto en móvil (la barra inferior reemplaza la navegación) */}
+        <button
+          className="btn btn-secondary text-sm audit-back-btn"
+          style={{ marginBottom: '0.25rem', padding: '0.25rem 0.5rem', height: 'auto', border: 'none', background: 'transparent' }}
           onClick={() => navigate('/audits')}
         >
           <ArrowLeft size={16} style={{ marginRight: '0.25rem' }}/> Volver al listado
         </button>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.375rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Auditoría Global de Existencia
-              {isCompleted && <span className="badge badge-success"><CheckCircle size={12} style={{ marginRight: '3px' }}/> Finalizada</span>}
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: '1.125rem', marginBottom: '0.125rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              Auditoría de Existencia
+              {isCompleted && <span className="badge badge-success"><CheckCircle size={12} style={{ marginRight: '3px' }}/>Finalizada</span>}
             </h1>
-            <p className="text-sm text-muted">
-              AUD-{String(audit.id).padStart(4, '0')} · {new Date(audit.date).toLocaleString('es-ES')} · {stats.total} unidades totales
+            <p className="text-xs text-muted">
+              AUD-{String(audit.id).padStart(4, '0')} · {new Date(audit.date).toLocaleDateString('es-MX')} · {stats.total} unidades
             </p>
           </div>
+          {/* Botones de acción — en desktop van aquí, en móvil se convierten en barra flotante */}
           {!isCompleted && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn btn-secondary" onClick={handleSaveDraft} disabled={saving}>
-                <Save size={15}/> {saving ? 'Guardando...' : 'Guardar progreso'}
+            <div className="audit-header-actions" style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+              <button className="btn btn-secondary" style={{ padding: '0.4rem 0.625rem' }} onClick={handleSaveDraft} disabled={saving}>
+                <Save size={16}/> Guardar
               </button>
-              <button className="btn btn-primary" onClick={handleFinishAudit} disabled={saving}>
-                <CheckCircle size={15}/> Finalizar y ajustar inventario
+              <button className="btn btn-primary" style={{ padding: '0.4rem 0.625rem' }} onClick={handleFinishAudit} disabled={saving}>
+                <CheckCircle size={16}/> Finalizar
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Barra de progreso y stats */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+      {/* ── Stats — single row, compact on mobile ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.375rem' }}>
         {[
-          { label: 'Sin revisar', value: stats.pending,       color: '#6b7280', bg: '#f3f4f6' },
-          { label: 'Encontrado',  value: stats.found_ok,      color: '#15803d', bg: '#f0fdf4' },
-          { label: 'Dañado',      value: stats.found_damaged, color: '#b45309', bg: '#fffbeb' },
-          { label: 'No encontrado', value: stats.missing,     color: '#dc2626', bg: '#fff5f5' },
+          { label: 'Sin revisar',   value: stats.pending,       color: '#6b7280', bg: '#f3f4f6' },
+          { label: 'Encontrado',    value: stats.found_ok,      color: '#15803d', bg: '#f0fdf4' },
+          { label: 'Dañado',        value: stats.found_damaged, color: '#b45309', bg: '#fffbeb' },
+          { label: 'No encontrado', value: stats.missing,       color: '#dc2626', bg: '#fff5f5' },
         ].map(stat => (
-          <div key={stat.label} style={{ 
-              backgroundColor: stat.bg, 
-              border: `1px solid ${stat.color}30`, 
-              borderRadius: '8px', 
-              padding: '0.75rem 1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.125rem'
+          <div key={stat.label} style={{
+            backgroundColor: stat.bg,
+            border: `1px solid ${stat.color}30`,
+            borderRadius: '8px',
+            padding: '0.375rem 0.25rem',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px',
+            textAlign: 'center',
           }}>
-            <span style={{ fontSize: '1.5rem', fontWeight: 700, color: stat.color }}>{stat.value}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{stat.label}</span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.2 }}>{stat.label}</span>
           </div>
         ))}
       </div>
 
-      {/* Barra de búsqueda / filtros */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+      {/* ── Búsqueda y filtro ── */}
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ position: 'relative', flex: 1 }}>
           <Search size={14} style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
           <input
             type="text"
             className="form-control"
             placeholder="Buscar producto..."
-            style={{ paddingLeft: '2rem', height: '34px' }}
+            style={{ paddingLeft: '2rem' }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
-        <select 
-          className="form-control" 
-          style={{ height: '34px', width: 'auto' }}
+        <select
+          className="form-control"
+          style={{ width: 'auto', flexShrink: 0, maxWidth: '140px' }}
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
         >
           <option value="all">Todos ({stats.total})</option>
           <option value="null">Sin revisar ({stats.pending})</option>
-          <option value="found_ok">Encontrado OK ({stats.found_ok})</option>
-          <option value="found_damaged">Encontrado Dañado ({stats.found_damaged})</option>
-          <option value="missing">No encontrado ({stats.missing})</option>
+          <option value="found_ok">OK ({stats.found_ok})</option>
+          <option value="found_damaged">Dañado ({stats.found_damaged})</option>
+          <option value="missing">Faltante ({stats.missing})</option>
         </select>
       </div>
 
-      {/* Checklist de auditoría */}
-      <div className="glass-panel" style={{ flex: 1, overflow: 'auto', padding: 0 }}>
+      {/* ── Lista de cards ── */}
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
 
-        {/* ── Desktop: tabla ── */}
-        <table className="table" style={{ width: '100%', minWidth: '700px', borderCollapse: 'separate', borderSpacing: 0, display: 'table' }}>
-          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-            <tr className="catalog-table-header" style={{ display: 'table-row' }}>
-              <th style={{ backgroundColor: '#f8fafc', width: '40%' }}>Producto / Info</th>
-              <th style={{ backgroundColor: '#f8fafc', width: '15%', textAlign: 'center' }}>Sede Original</th>
-              <th style={{ backgroundColor: '#f8fafc', width: '15%', textAlign: 'center' }}>Estado Previo</th>
-              <th style={{ backgroundColor: '#f8fafc', textAlign: 'center' }}>Marcar Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((item, rowIdx) => {
-              const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG[null];
-              const actionButtons = (
-                <>
-                  <button
-                    onClick={() => handleSetStatus(item.id, item.status === 'found_ok' ? null : 'found_ok')}
-                    className="audit-action-btn"
-                    style={{
-                      padding: '0.3rem 0.6rem', borderRadius: '6px',
-                      border: `1px solid ${item.status === 'found_ok' ? '#16a34a' : '#d1d5db'}`,
-                      backgroundColor: item.status === 'found_ok' ? '#15803d' : 'white',
-                      color: item.status === 'found_ok' ? 'white' : '#374151',
-                      fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
-                      transition: 'all 0.15s', minHeight: '36px',
-                    }}
-                  >✓ Funcional</button>
-                  <button
-                    onClick={() => handleSetStatus(item.id, item.status === 'found_damaged' ? null : 'found_damaged')}
-                    className="audit-action-btn"
-                    style={{
-                      padding: '0.3rem 0.6rem', borderRadius: '6px',
-                      border: `1px solid ${item.status === 'found_damaged' ? '#d97706' : '#d1d5db'}`,
-                      backgroundColor: item.status === 'found_damaged' ? '#b45309' : 'white',
-                      color: item.status === 'found_damaged' ? 'white' : '#374151',
-                      fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
-                      transition: 'all 0.15s', minHeight: '36px',
-                    }}
-                  >⚠ Dañado</button>
-                  <button
-                    onClick={() => handleSetStatus(item.id, item.status === 'missing' ? null : 'missing')}
-                    className="audit-action-btn"
-                    style={{
-                      padding: '0.3rem 0.6rem', borderRadius: '6px',
-                      border: `1px solid ${item.status === 'missing' ? '#dc2626' : '#d1d5db'}`,
-                      backgroundColor: item.status === 'missing' ? '#dc2626' : 'white',
-                      color: item.status === 'missing' ? 'white' : '#374151',
-                      fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
-                      transition: 'all 0.15s', minHeight: '36px',
-                    }}
-                  >✕ No encontrado</button>
-                </>
-              );
+        {filtered.length === 0 && (
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)', backgroundColor: 'white', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            {items.length === 0
+              ? 'No hay unidades para auditar (el inventario está en 0).'
+              : 'No hay resultados para los filtros aplicados.'}
+          </div>
+        )}
 
-              return (
-                <tr
-                  key={item.id}
-                  style={{
-                    backgroundColor: item.status ? cfg.bg : (rowIdx % 2 === 0 ? '#ffffff' : '#fafafa'),
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        minWidth: '28px', height: '28px', borderRadius: '50%',
-                        backgroundColor: cfg.bg || '#f1f5f9', border: `2px solid ${cfg.border}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.6875rem', fontWeight: 700, color: cfg.color
-                      }}>
-                        {item.unitSeq}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{item.productName}</div>
-                        <div className="text-xs text-muted" style={{ display: 'flex', gap: '0.5rem' }}>
-                          {item.productMarca && <span>{item.productMarca}</span>}
-                          {item.productSku && <span>· {item.productSku}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>{item.originalLocation}</span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', color: item.originalCondition === 'funcional' ? 'var(--success-color)' : 'var(--error-color)', fontWeight: 500 }}>
-                      {item.originalCondition === 'funcional' ? '● Funcional' : '● No funcional'}
-                    </span>
-                  </td>
-                  <td>
-                    {isCompleted ? (
-                      <div style={{ textAlign: 'center', padding: '0.25rem', color: cfg.color, fontWeight: 600, fontSize: '0.875rem' }}>{cfg.label}</div>
-                    ) : (
-                      <div className="audit-action-buttons" style={{ display: 'flex', gap: '0.375rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        {actionButtons}
-                      </div>
+        {filtered.map((item) => {
+          const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG[null];
+
+          return (
+            <div
+              key={item.id}
+              style={{
+                backgroundColor: item.status ? cfg.bg : 'white',
+                border: `1.5px solid ${item.status ? cfg.border : 'var(--border-color)'}`,
+                borderRadius: '10px',
+                padding: '0.875rem 1rem',
+                transition: 'all 0.15s',
+              }}
+            >
+              {/* Fila superior: número + nombre + sede */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', marginBottom: '0.625rem' }}>
+                {/* Número de unidad */}
+                <div style={{
+                  minWidth: '30px', height: '30px', borderRadius: '50%',
+                  backgroundColor: cfg.bg || '#f1f5f9',
+                  border: `2px solid ${cfg.border || '#d1d5db'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.75rem', fontWeight: 700, color: cfg.color, flexShrink: 0,
+                }}>
+                  {item.unitSeq}
+                </div>
+
+                {/* Nombre y metadatos */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', lineHeight: 1.3, wordBreak: 'break-word' }}>
+                    {item.productName}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.25rem', alignItems: 'center' }}>
+                    {item.productMarca && item.productMarca !== 'S/M' && (
+                      <span className="badge badge-neutral" style={{ fontSize: '0.68rem' }}>{item.productMarca}</span>
                     )}
-                  </td>
-                </tr>
-              );
-            })}
+                    {item.productSku && (
+                      <span className="text-xs text-muted">{item.productSku}</span>
+                    )}
+                    <span className="badge badge-neutral" style={{ fontSize: '0.68rem' }}>{item.originalLocation}</span>
+                    <span style={{
+                      fontSize: '0.68rem', fontWeight: 500,
+                      color: item.originalCondition === 'funcional' ? 'var(--success-color)' : 'var(--error-color)',
+                    }}>
+                      ● {item.originalCondition === 'funcional' ? 'Funcional' : 'No func.'}
+                    </span>
+                  </div>
+                </div>
 
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan="4" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  {items.length === 0
-                    ? 'No hay unidades para auditar (el inventario está en 0).'
-                    : 'No hay resultados para los filtros aplicados.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                {/* Estado actual (si ya fue marcado) */}
+                {item.status && (
+                  <span style={{ fontSize: '0.7rem', color: cfg.color, fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
+                    {cfg.label}
+                  </span>
+                )}
+              </div>
+
+              {/* Botones de acción — 3 columnas a ancho completo */}
+              {!isCompleted && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.375rem' }}>
+                  {[
+                    { key: 'found_ok',      label: '✓ Funcional',    activeColor: '#15803d', activeBorder: '#16a34a', activeText: 'white', inactiveText: '#374151' },
+                    { key: 'found_damaged', label: '⚠ Dañado',       activeColor: '#b45309', activeBorder: '#d97706', activeText: 'white', inactiveText: '#374151' },
+                    { key: 'missing',       label: '✕ No encontrado', activeColor: '#dc2626', activeBorder: '#dc2626', activeText: 'white', inactiveText: '#374151' },
+                  ].map(({ key, label, activeColor, activeBorder, activeText, inactiveText }) => {
+                    const isActive = item.status === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleSetStatus(item.id, isActive ? null : key)}
+                        style={{
+                          padding: '0.625rem 0.25rem',
+                          borderRadius: '8px',
+                          border: `1.5px solid ${isActive ? activeBorder : '#d1d5db'}`,
+                          backgroundColor: isActive ? activeColor : 'white',
+                          color: isActive ? activeText : inactiveText,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          minHeight: '44px',
+                          lineHeight: 1.2,
+                          webkitTapHighlightColor: 'transparent',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {isCompleted && (
+                <div style={{ textAlign: 'center', padding: '0.375rem 0 0', color: cfg.color, fontWeight: 600, fontSize: '0.875rem' }}>
+                  {cfg.label}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Barra flotante de acciones — solo visible en móvil (CSS lo controla) */}
+      {!isCompleted && (
+        <div className="audit-float-bar" style={{ display: 'none' }}>
+          <button className="btn btn-secondary" onClick={handleSaveDraft} disabled={saving}>
+            <Save size={16}/> Guardar progreso
+          </button>
+          <button className="btn btn-primary" onClick={handleFinishAudit} disabled={saving}>
+            <CheckCircle size={16}/> Finalizar
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+
