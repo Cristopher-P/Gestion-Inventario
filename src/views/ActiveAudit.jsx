@@ -166,7 +166,7 @@ export default function ActiveAudit() {
       </div>
 
       {/* Barra de progreso y stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
         {[
           { label: 'Sin revisar', value: stats.pending,       color: '#6b7280', bg: '#f3f4f6' },
           { label: 'Encontrado',  value: stats.found_ok,      color: '#15803d', bg: '#f0fdf4' },
@@ -215,11 +215,13 @@ export default function ActiveAudit() {
         </select>
       </div>
 
-      {/* Tabla de checklist */}
+      {/* Checklist de auditoría */}
       <div className="glass-panel" style={{ flex: 1, overflow: 'auto', padding: 0 }}>
-        <table className="table" style={{ width: '100%', minWidth: '700px', borderCollapse: 'separate', borderSpacing: 0 }}>
+
+        {/* ── Desktop: tabla ── */}
+        <table className="table" style={{ width: '100%', minWidth: '700px', borderCollapse: 'separate', borderSpacing: 0, display: 'table' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-            <tr>
+            <tr className="catalog-table-header" style={{ display: 'table-row' }}>
               <th style={{ backgroundColor: '#f8fafc', width: '40%' }}>Producto / Info</th>
               <th style={{ backgroundColor: '#f8fafc', width: '15%', textAlign: 'center' }}>Sede Original</th>
               <th style={{ backgroundColor: '#f8fafc', width: '15%', textAlign: 'center' }}>Estado Previo</th>
@@ -229,23 +231,63 @@ export default function ActiveAudit() {
           <tbody>
             {filtered.map((item, rowIdx) => {
               const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG[null];
+              const actionButtons = (
+                <>
+                  <button
+                    onClick={() => handleSetStatus(item.id, item.status === 'found_ok' ? null : 'found_ok')}
+                    className="audit-action-btn"
+                    style={{
+                      padding: '0.3rem 0.6rem', borderRadius: '6px',
+                      border: `1px solid ${item.status === 'found_ok' ? '#16a34a' : '#d1d5db'}`,
+                      backgroundColor: item.status === 'found_ok' ? '#15803d' : 'white',
+                      color: item.status === 'found_ok' ? 'white' : '#374151',
+                      fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
+                      transition: 'all 0.15s', minHeight: '36px',
+                    }}
+                  >✓ Funcional</button>
+                  <button
+                    onClick={() => handleSetStatus(item.id, item.status === 'found_damaged' ? null : 'found_damaged')}
+                    className="audit-action-btn"
+                    style={{
+                      padding: '0.3rem 0.6rem', borderRadius: '6px',
+                      border: `1px solid ${item.status === 'found_damaged' ? '#d97706' : '#d1d5db'}`,
+                      backgroundColor: item.status === 'found_damaged' ? '#b45309' : 'white',
+                      color: item.status === 'found_damaged' ? 'white' : '#374151',
+                      fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
+                      transition: 'all 0.15s', minHeight: '36px',
+                    }}
+                  >⚠ Dañado</button>
+                  <button
+                    onClick={() => handleSetStatus(item.id, item.status === 'missing' ? null : 'missing')}
+                    className="audit-action-btn"
+                    style={{
+                      padding: '0.3rem 0.6rem', borderRadius: '6px',
+                      border: `1px solid ${item.status === 'missing' ? '#dc2626' : '#d1d5db'}`,
+                      backgroundColor: item.status === 'missing' ? '#dc2626' : 'white',
+                      color: item.status === 'missing' ? 'white' : '#374151',
+                      fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
+                      transition: 'all 0.15s', minHeight: '36px',
+                    }}
+                  >✕ No encontrado</button>
+                </>
+              );
 
               return (
-                <tr 
+                <tr
                   key={item.id}
-                  style={{ 
+                  style={{
                     backgroundColor: item.status ? cfg.bg : (rowIdx % 2 === 0 ? '#ffffff' : '#fafafa'),
                     transition: 'background-color 0.2s ease'
                   }}
                 >
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      {/* Indicador de número de unidad */}
                       <div style={{
-                        minWidth: '28px', height: '28px',
-                        borderRadius: '50%',
-                        backgroundColor: cfg.bg || '#f1f5f9',
-                        border: `2px solid ${cfg.border}`,
+                        minWidth: '28px', height: '28px', borderRadius: '50%',
+                        backgroundColor: cfg.bg || '#f1f5f9', border: `2px solid ${cfg.border}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '0.6875rem', fontWeight: 700, color: cfg.color
                       }}>
@@ -260,79 +302,20 @@ export default function ActiveAudit() {
                       </div>
                     </div>
                   </td>
-                  
                   <td style={{ textAlign: 'center' }}>
                     <span className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>{item.originalLocation}</span>
                   </td>
-                  
                   <td style={{ textAlign: 'center' }}>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      color: item.originalCondition === 'funcional' ? 'var(--success-color)' : 'var(--error-color)',
-                      fontWeight: 500 
-                    }}>
+                    <span style={{ fontSize: '0.75rem', color: item.originalCondition === 'funcional' ? 'var(--success-color)' : 'var(--error-color)', fontWeight: 500 }}>
                       {item.originalCondition === 'funcional' ? '● Funcional' : '● No funcional'}
                     </span>
                   </td>
-                  
                   <td>
                     {isCompleted ? (
-                      <div style={{ textAlign: 'center', padding: '0.25rem', color: cfg.color, fontWeight: 600, fontSize: '0.875rem' }}>
-                        {cfg.label}
-                      </div>
+                      <div style={{ textAlign: 'center', padding: '0.25rem', color: cfg.color, fontWeight: 600, fontSize: '0.875rem' }}>{cfg.label}</div>
                     ) : (
-                      <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => handleSetStatus(item.id, item.status === 'found_ok' ? null : 'found_ok')}
-                          style={{
-                            padding: '0.3rem 0.6rem',
-                            borderRadius: '6px',
-                            border: `1px solid ${item.status === 'found_ok' ? '#16a34a' : '#d1d5db'}`,
-                            backgroundColor: item.status === 'found_ok' ? '#15803d' : 'white',
-                            color: item.status === 'found_ok' ? 'white' : '#374151',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: '0.25rem',
-                            transition: 'all 0.15s'
-                          }}
-                        >
-                          ✓ Funcional
-                        </button>
-                        <button
-                          onClick={() => handleSetStatus(item.id, item.status === 'found_damaged' ? null : 'found_damaged')}
-                          style={{
-                            padding: '0.3rem 0.6rem',
-                            borderRadius: '6px',
-                            border: `1px solid ${item.status === 'found_damaged' ? '#d97706' : '#d1d5db'}`,
-                            backgroundColor: item.status === 'found_damaged' ? '#b45309' : 'white',
-                            color: item.status === 'found_damaged' ? 'white' : '#374151',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: '0.25rem',
-                            transition: 'all 0.15s'
-                          }}
-                        >
-                          ⚠ Dañado
-                        </button>
-                        <button
-                          onClick={() => handleSetStatus(item.id, item.status === 'missing' ? null : 'missing')}
-                          style={{
-                            padding: '0.3rem 0.6rem',
-                            borderRadius: '6px',
-                            border: `1px solid ${item.status === 'missing' ? '#dc2626' : '#d1d5db'}`,
-                            backgroundColor: item.status === 'missing' ? '#dc2626' : 'white',
-                            color: item.status === 'missing' ? 'white' : '#374151',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: '0.25rem',
-                            transition: 'all 0.15s'
-                          }}
-                        >
-                          ✕ No encontrado
-                        </button>
+                      <div className="audit-action-buttons" style={{ display: 'flex', gap: '0.375rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {actionButtons}
                       </div>
                     )}
                   </td>
