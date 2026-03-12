@@ -116,14 +116,22 @@ export default function ActiveAudit() {
     pending:      items.filter(i => i.status === null).length,
   }), [items]);
 
-  const filtered = useMemo(() => items.filter(it => {
-    const matchSearch = (it.productName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (it.productSku || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (it.productMarca || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (it.productResponsable || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchFilter = filterStatus === 'all' || it.status === (filterStatus === 'null' ? null : filterStatus);
-    return matchSearch && matchFilter;
-  }), [items, searchTerm, filterStatus]);
+  const filtered = useMemo(() => items
+    .filter(it => {
+      const matchSearch = (it.productName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (it.productSku || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (it.productMarca || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (it.productResponsable || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchFilter = filterStatus === 'all' || it.status === (filterStatus === 'null' ? null : filterStatus);
+      return matchSearch && matchFilter;
+    })
+    // Pending (null) first — marked items sink to the bottom
+    .sort((a, b) => {
+      const aPending = a.status === null ? 0 : 1;
+      const bPending = b.status === null ? 0 : 1;
+      return aPending - bPending;
+    })
+  , [items, searchTerm, filterStatus]);
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Cargando auditoría...</div>;
   if (!audit)  return null;

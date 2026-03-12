@@ -63,11 +63,32 @@ export default function InventoryManager() {
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData(prev => ({ ...prev, photo: reader.result }));
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      // Max dimension 1200px — mantiene proporción
+      const MAX = 1200;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+        else                { width  = Math.round(width  * MAX / height); height = MAX; }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+      // 60% calidad JPEG ≈ 10-15× más pequeño que el original
+      const compressed = canvas.toDataURL('image/jpeg', 0.6);
+      setFormData(prev => ({ ...prev, photo: compressed }));
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    img.src = objectUrl;
   };
 
   const handleLocationChange = (loc, prop, val) => {
