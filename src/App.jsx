@@ -5,7 +5,6 @@ import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import Dashboard from './views/Dashboard';
 import InventoryManager from './views/InventoryManager';
-import Transactions from './views/Transactions';
 import InventoryAudit from './views/InventoryAudit';
 import ActiveAudit from './views/ActiveAudit';
 import Login from './views/Login';
@@ -23,7 +22,6 @@ function AuthenticatedLayout() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/inventario" element={<InventoryManager />} />
-            <Route path="/movimientos" element={<Transactions />} />
             <Route path="/audits" element={<InventoryAudit />} />
             <Route path="/audits/:id" element={<ActiveAudit />} />
             <Route path="*" element={<Navigate to="/" replace />} />

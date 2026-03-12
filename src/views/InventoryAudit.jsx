@@ -10,15 +10,12 @@ export default function InventoryAudit() {
   const { audits } = useInventory();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState('');
   const { startAudit } = useInventory();
 
   const handleStartAudit = async (e) => {
     e.preventDefault();
-    if (!selectedLocation) return;
-    
     try {
-      const auditId = await startAudit(selectedLocation);
+      const auditId = await startAudit();
       navigate(`/audits/${auditId}`);
     } catch (error) {
       alert("Error al iniciar la auditoría");
@@ -68,7 +65,7 @@ export default function InventoryAudit() {
                  {audits.map(audit => (
                    <tr key={audit.id}>
                      <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>AUD-{String(audit.id).padStart(4, '0')}</td>
-                     <td style={{ fontWeight: 500 }}><MapPin size={14} style={{ display: 'inline', marginRight: '4px', color: 'var(--primary-color)' }}/> {audit.location}</td>
+                     <td style={{ fontWeight: 500 }}><MapPin size={14} style={{ display: 'inline', marginRight: '4px', color: 'var(--primary-color)' }}/> Global</td>
                      <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                           <Calendar size={14} className="text-muted" />
@@ -105,34 +102,28 @@ export default function InventoryAudit() {
 
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '400px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem' }}>Iniciar Auditoría</h2>
-              <button className="btn btn-secondary" style={{ padding: '0.25rem', border: 'none' }} onClick={() => setIsModalOpen(false)}><X size={18} /></button>
+          <div className="modal-content" style={{ maxWidth: '450px', padding: 0, borderRadius: 'var(--border-radius-lg)', overflow: 'hidden' }}>
+            <div style={{ padding: '1.25rem 1.5rem', backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ClipboardCheck size={20} className="text-primary" />
+                Iniciar Nueva Auditoría
+              </h2>
+              <button className="btn btn-secondary" style={{ padding: '0.25rem', border: 'none', boxShadow: 'none' }} onClick={() => setIsModalOpen(false)}><X size={18} /></button>
             </div>
             
-            <form onSubmit={handleStartAudit}>
-              <div className="form-group">
-                <label className="form-label">Sede a Auditar</label>
-                <select 
-                  className="form-control" 
-                  required 
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                >
-                  <option value="">Seleccione una sede...</option>
-                  {LOCATIONS.map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted" style={{ marginTop: '0.5rem' }}>
-                  Al iniciar, el sistema tomará una "foto" del inventario actual en esta sede para compararlo con el conteo físico.
+            <form onSubmit={handleStartAudit} style={{ padding: '1.5rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ color: 'var(--text-primary)', marginBottom: '0.75rem', fontSize: '0.95rem' }}>
+                  Estás a punto de iniciar un conteo <strong>Global</strong> de inventario.
                 </p>
+                <div style={{ backgroundColor: '#fff8f1', border: '1px solid #ffd8b4', borderRadius: '6px', padding: '0.75rem', fontSize: '0.875rem', color: '#b45309' }}>
+                  <strong>Importante:</strong> Al iniciar, el sistema tomará la existencia esperada de todos los productos en todas las sedes. Asegúrate de que no se estén realizando entradas o salidas al mismo tiempo.
+                </div>
               </div>
               
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={!selectedLocation}>Comenzar Conteo</button>
+                <button type="submit" className="btn btn-primary">Comenzar Conteo Global</button>
               </div>
             </form>
           </div>

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Database, ClipboardList, ClipboardCheck } from 'lucide-react';
+import { LayoutDashboard, Database, ClipboardCheck } from 'lucide-react';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
   const toggleSidebar = () => setIsOpen(!isOpen);
@@ -7,7 +7,6 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const navItems = [
     { to: "/", icon: <LayoutDashboard size={18} />, label: "Panel General" },
     { to: "/inventario", icon: <Database size={18} />, label: "Inventario Físico" },
-    { to: "/movimientos", icon: <ClipboardList size={18} />, label: "Bitácora" },
     { to: "/audits", icon: <ClipboardCheck size={18} />, label: "Auditorías" }
   ];
 
