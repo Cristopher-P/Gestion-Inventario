@@ -30,11 +30,22 @@ export default function ActiveAudit() {
       
       const dbItems = await getAuditItems(foundAudit.id);
       
+      // Intentar recuperar progreso de localStorage
+      const localKey = `audit_progress_${id}`;
+      const savedData = localStorage.getItem(localKey);
+      let localParsed = null;
+      if (savedData) {
+        try { localParsed = JSON.parse(savedData); } catch (e) { console.error("Error parsing local audit progress", e); }
+      }
+
       // Enriquecer con metadatos de producto
       const enriched = dbItems.map((item, idx) => {
         const prod = products.find(p => p.id === item.productId);
+        const localItem = localParsed ? localParsed.find(li => li.id === item.id) : null;
+        
         return {
           ...item,
+          status:            localItem ? localItem.status : item.status,
           productName:       prod ? prod.name        : 'Producto Eliminado',
           productSku:        prod ? prod.sku         : '',
           productMarca:      prod ? prod.marca       : '',
@@ -71,6 +82,29 @@ export default function ActiveAudit() {
     }
   }, [id, audits, products]);
 
+  // Guardado automático en localStorage y debounce a base de datos
+  useEffect(() => {
+    if (loading || isCompleted) return;
+
+    // Guardar en localStorage inmediatamente
+    const localKey = `audit_progress_${id}`;
+    localStorage.setItem(localKey, JSON.stringify(items.map(it => ({ id: it.id, status: it.status }))));
+
+    // Debounce para guardar en la base de datos
+    const timeout = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await saveAuditProgress(items.map(it => ({ id: it.id, status: it.status })));
+      } catch (e) {
+        console.error("Error en autosave:", e);
+      } finally {
+        setSaving(false);
+      }
+    }, 3000); // Guardar 3 segundos después del último cambio
+
+    return () => clearTimeout(timeout);
+  }, [items, id, loading]);
+
   const handleSetStatus = (itemId, newStatus) => {
     if (audit?.status === 'completed') return;
     setItems(prev => prev.map(it => it.id === itemId ? { ...it, status: newStatus } : it));
@@ -98,6 +132,10 @@ export default function ActiveAudit() {
       const withDefaults = items.map(it => ({ id: it.id, status: it.status ?? 'missing' }));
       await saveAuditProgress(withDefaults);
       await finishAudit(audit.id);
+      
+      // Limpiar localStorage
+      localStorage.removeItem(`audit_progress_${id}`);
+      
       alert('Auditoría completada. Se actualizó el inventario.');
       navigate('/audits');
     } catch (e) {
