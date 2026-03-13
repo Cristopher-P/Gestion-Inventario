@@ -100,10 +100,28 @@ export default function ActiveAudit() {
       } finally {
         setSaving(false);
       }
-    }, 3000); // Guardar 3 segundos después del último cambio
+    }, 1500); // Guardar 1.5 segundos después del último cambio (más rápido)
 
     return () => clearTimeout(timeout);
-  }, [items, id, loading]);
+  }, [items, id, loading, isCompleted]);
+
+  // Guardado de emergencia al intentar cerrar o recargar la pestaña
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Intentar guardar el progreso actual antes de salir
+      const data = items.map(it => ({ id: it.id, status: it.status }));
+      saveAuditProgress(data).catch(console.error);
+      
+      // En algunos navegadores, esto muestra un aviso standard
+      if (!isCompleted && items.some(it => it.status !== null)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [items, isCompleted]);
 
   const handleSetStatus = (itemId, newStatus) => {
     if (audit?.status === 'completed') return;
@@ -200,9 +218,28 @@ export default function ActiveAudit() {
               AUD-{String(audit.id).padStart(4, '0')} · {new Date(audit.date).toLocaleDateString('es-MX')} · {stats.total} unidades
             </p>
           </div>
-          {/* Botones de acción — en desktop van aquí, en móvil se convierten en barra flotante */}
+          {/* Botones de acción y estado de sincronización */}
           {!isCompleted && (
-            <div className="audit-header-actions" style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+            <div className="audit-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+              {/* Indicador de estado */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.25rem',
+                fontSize: '0.75rem', fontWeight: 500,
+                color: saving ? 'var(--text-secondary)' : 'var(--success-color)',
+              }}>
+                {saving ? (
+                  <>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'currentColor', animation: 'pulse 1.5s infinite' }}></div>
+                    Guardando nube...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={12} />
+                    Sincronizado
+                  </>
+                )}
+              </div>
+
               <button className="btn btn-secondary" style={{ padding: '0.4rem 0.625rem' }} onClick={handleSaveDraft} disabled={saving}>
                 <Save size={16}/> Guardar
               </button>

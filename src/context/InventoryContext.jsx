@@ -299,11 +299,14 @@ export function InventoryProvider({ children }) {
 
   const saveAuditProgress = async (itemsUpdates) => {
     try {
-      await Promise.all(
-        itemsUpdates.map(u =>
-          supabase.from('audit_items').update({ status: u.status }).eq('id', u.id)
-        )
-      );
+      // Usar upsert masivo para mayor eficiencia y confiabilidad
+      const { error } = await supabase
+        .from('audit_items')
+        .upsert(
+          itemsUpdates.map(u => ({ id: u.id, status: u.status })),
+          { onConflict: 'id' }
+        );
+      if (error) throw error;
     } catch (error) {
       console.error('Error saving audit progress:', error);
       throw error;
